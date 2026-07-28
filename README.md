@@ -1,6 +1,6 @@
-# vaultrag
+# VaultRAG
 
-[![ci](https://github.com/royalpinto007/vaultrag/actions/workflows/ci.yml/badge.svg)](https://github.com/royalpinto007/vaultrag/actions/workflows/ci.yml)
+[![ci](https://github.com/royalpinto007/VaultRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/royalpinto007/VaultRAG/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![tests](https://img.shields.io/badge/tests-56-brightgreen.svg)](tests/)
 
@@ -42,7 +42,7 @@ By the time you filter, the unauthorized chunks are already in your process. The
 log line, a trace span, an error report, or a prompt you assembled one step too early. And a
 top-k of 5 that filters down to 1 silently degrades the answer with no signal that it happened.
 
-vaultrag puts the ACL predicate in the same SQL query as the vector search and the keyword search.
+VaultRAG puts the ACL predicate in the same SQL query as the vector search and the keyword search.
 A chunk the user cannot see is never selected, never scored, never ranked, never logged. It cannot
 leak, because it was never fetched.
 
