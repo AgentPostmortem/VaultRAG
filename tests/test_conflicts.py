@@ -67,6 +67,23 @@ def test_chunks_from_one_document_are_not_a_conflict_with_themselves():
     assert detect_conflicts([_hit("hr-policy"), _hit("hr-policy")]) == []
 
 
+def test_chunks_from_two_official_documents_are_reported_once():
+    """Retrieval returns chunks, not documents. One disagreement must not be printed once per
+    chunk pair."""
+    hits = [
+        _hit("hr-policy"),
+        _hit("hr-policy"),
+        _hit("finance-policy"),
+        _hit("finance-policy"),
+    ]
+    assert len(detect_conflicts(hits)) == 1
+
+
+def test_official_chunks_do_not_duplicate_an_informal_conflict():
+    hits = [_hit("hr-policy"), _hit("hr-policy"), _hit("notes", official=False)]
+    assert len(detect_conflicts(hits)) == 1
+
+
 def test_a_single_source_of_truth_produces_no_conflict():
     assert detect_conflicts([_hit("hr-policy")]) == []
 
