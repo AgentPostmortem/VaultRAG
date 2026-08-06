@@ -87,6 +87,14 @@ async def test_real_llm_is_held_to_refusal_correctness(corpus, conn, embedder):
     assert report.pass_rate == 0.0
 
 
+@pytest.mark.asyncio
+async def test_unresolvable_principal_refusal_does_not_drag_recall(corpus, conn, embedder):
+    """An unknown user retrieving nothing is correct, not a recall miss."""
+    cases = [_case("unknown", "ghost-user", "anything", should_answer=False)]
+    report = await run_eval(conn, embedder, _ANSWERS, cases, llm_judged=False)
+    assert report.mean_recall == 1.0
+
+
 # --------------------------------------------------------------------------- scoring arithmetic
 
 
@@ -98,6 +106,18 @@ def test_a_leak_fails_the_case_regardless_of_everything_else():
 def test_no_expected_docs_means_retrieving_nothing_is_perfect_recall():
     c = CaseResult(case_id="x", user_id="dave", recall=1.0)
     assert c.passed is True
+
+
+def test_mean_recall_averages_every_scored_case():
+    r = EvalReport(
+        label="x",
+        cases=[
+            CaseResult(case_id="a", user_id="u", recall=0.0),
+            CaseResult(case_id="b", user_id="u", recall=1.0),
+        ],
+        llm_judged=False,
+    )
+    assert r.mean_recall == 0.5
 
 
 # --------------------------------------------------------------------------------- regression diff
