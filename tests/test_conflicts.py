@@ -14,10 +14,10 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from app.conflicts import corpus_freshness, detect_conflicts, detect_stale
-from app.embeddings import FakeEmbedder
-from app.ingest import Doc, ingest
-from app.retrieval import Hit
+from vaultrag.conflicts import corpus_freshness, detect_conflicts, detect_stale
+from vaultrag.embeddings import FakeEmbedder
+from vaultrag.ingest import Doc, ingest
+from vaultrag.retrieval import Hit
 
 
 def _hit(doc_id, *, official=True, owner="a@corp.test", age_days=1, title=None) -> Hit:
