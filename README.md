@@ -1,6 +1,6 @@
 # VaultRAG
 
-[![ci](https://github.com/royalpinto007/VaultRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/royalpinto007/VaultRAG/actions/workflows/ci.yml)
+[![ci](https://github.com/AgentPostmortem/VaultRAG/actions/workflows/ci.yml/badge.svg)](https://github.com/AgentPostmortem/VaultRAG/actions/workflows/ci.yml)
 [![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![tests](https://img.shields.io/badge/tests-56-brightgreen.svg)](tests/)
 
