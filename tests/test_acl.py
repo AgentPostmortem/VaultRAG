@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.retrieval import resolve_principal, search
+from vaultrag.retrieval import resolve_principal, search
 
 pytestmark = pytest.mark.asyncio
 
@@ -115,7 +115,7 @@ async def test_removing_user_from_group_takes_effect_immediately(conn, corpus, e
 
 
 async def test_soft_deleted_document_is_unreachable(conn, corpus, embedder):
-    from app.ingest import soft_delete
+    from vaultrag.ingest import soft_delete
 
     assert "eng-handbook" in await _search_as(conn, embedder, "alice")
     await soft_delete(conn, "eng-handbook")

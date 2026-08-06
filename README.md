@@ -133,7 +133,7 @@ decoration.
 
 ## Generation guardrails
 
-Retrieval decides what the model may *read*. `app/generate.py` decides what it may *say*.
+Retrieval decides what the model may *read*. `vaultrag/generate.py` decides what it may *say*.
 
 - **Weak evidence is a refusal.** Top-k always returns k things. If the best of them is barely
   related, answering from it produces a confident irrelevant answer.
@@ -230,6 +230,14 @@ up what that means. If a client could assert its own groups, the ACL would be de
 `/audit/document/{id}` exists because on the day someone asks *"was this ever leaked"*, you want a
 query, not an archaeology project.
 
+## Install
+
+```bash
+pip install vaultrag-cli
+```
+
+Published at [pypi.org/project/vaultrag-cli](https://pypi.org/project/vaultrag-cli/).
+
 ## CLI
 
 ```bash
@@ -249,7 +257,7 @@ PYTHONPATH=. ./.venv/bin/python -m pytest -q  # 56 tests, no secrets needed
 vaultrag seed && vaultrag eval demo/gold.json --strict
 
 # serve it
-EMBEDDER=fake LLM=fake ./.venv/bin/python -m uvicorn app.main:app --reload
+EMBEDDER=fake LLM=fake ./.venv/bin/python -m uvicorn vaultrag.main:app --reload
 # -> http://localhost:8000/docs
 ```
 
