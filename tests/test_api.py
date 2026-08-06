@@ -22,8 +22,8 @@ os.environ["DATABASE_URL"] = os.getenv(
     "TEST_DATABASE_URL", "postgresql://vaultrag:vaultrag@localhost:5433/vaultrag_test"
 )
 
-from app.db import reset_schema  # noqa: E402
-from app.main import app  # noqa: E402
+from vaultrag.db import reset_schema  # noqa: E402
+from vaultrag.main import app  # noqa: E402
 
 pytestmark = pytest.mark.asyncio
 
@@ -36,10 +36,10 @@ async def client():
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as c:
         # lifespan doesn't run under ASGITransport, so wire the app state by hand
-        from app.config import get_settings
-        from app.db import make_pool
-        from app.embeddings import get_embedder
-        from app.generate import FakeLLM
+        from vaultrag.config import get_settings
+        from vaultrag.db import make_pool
+        from vaultrag.embeddings import get_embedder
+        from vaultrag.generate import FakeLLM
 
         settings = get_settings()
         pool = make_pool(settings.database_url)

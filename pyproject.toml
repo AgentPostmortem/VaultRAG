@@ -1,7 +1,8 @@
 [project]
-name = "vaultrag"
+name = "vaultrag-cli"
 version = "0.1.0"
 description = "Permission-aware RAG: access control enforced in the retrieval query, not after it."
+readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
     "rich>=13.0",
@@ -11,14 +12,23 @@ dependencies = [
     "pydantic>=2.9",
 ]
 
-# Without this, setuptools flat-layout autodiscovery sees app/ and demo/ as two top-level
+[project.urls]
+Homepage = "https://github.com/AgentPostmortem/VaultRAG"
+Repository = "https://github.com/AgentPostmortem/VaultRAG"
+Issues = "https://github.com/AgentPostmortem/VaultRAG/issues"
+
+# Without this, setuptools flat-layout autodiscovery sees vaultrag/ and demo/ as two top-level
 # packages and refuses to build at all. It never fired locally because the venv was installed
 # before demo/ existed, which is exactly the class of bug a clean-clone CI run exists to catch.
 [tool.setuptools]
-packages = ["app"]
+packages = ["vaultrag"]
+
+# schema.sql is loaded at runtime relative to __file__, so it has to ship inside the wheel.
+[tool.setuptools.package-data]
+vaultrag = ["schema.sql"]
 
 [project.scripts]
-vaultrag = "app.cli:main"
+vaultrag = "vaultrag.cli:main"
 
 [project.optional-dependencies]
 local = ["sentence-transformers>=3.0"]

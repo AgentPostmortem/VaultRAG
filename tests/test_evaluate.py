@@ -10,8 +10,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.evaluate import CaseResult, EvalReport, GoldCase, diff, run_eval
-from app.generate import FakeLLM
+from vaultrag.evaluate import CaseResult, EvalReport, GoldCase, diff, run_eval
+from vaultrag.generate import FakeLLM
 
 _ANSWERS = FakeLLM('{"answer": "The engineering bonus is 10% of base.", "cited": [1], "conflict": false}')
 

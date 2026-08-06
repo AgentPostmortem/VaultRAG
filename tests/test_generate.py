@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from app.generate import Answer, FakeLLM, generate
-from app.retrieval import Hit
+from vaultrag.generate import Answer, FakeLLM, generate
+from vaultrag.retrieval import Hit
 
 
 def _hit(chunk_id: int = 1, score: float = 0.5, title: str = "Handbook") -> Hit:

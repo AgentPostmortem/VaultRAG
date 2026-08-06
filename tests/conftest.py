@@ -13,9 +13,9 @@ import psycopg
 import pytest
 import pytest_asyncio
 
-from app.db import reset_schema
-from app.embeddings import FakeEmbedder
-from app.ingest import Doc, ingest
+from vaultrag.db import reset_schema
+from vaultrag.embeddings import FakeEmbedder
+from vaultrag.ingest import Doc, ingest
 
 # Deliberately a *different* database from the dev/demo default. These fixtures reset the schema,
 # so pointing them at the working database silently deletes whatever you seeded, and an empty
