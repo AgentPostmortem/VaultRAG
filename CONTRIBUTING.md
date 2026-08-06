@@ -29,3 +29,19 @@ or a concrete use case (for ideas) help a lot.
 By contributing, you agree that your contributions will be licensed under the
 same license as this project, and that you will follow the
 [Code of Conduct](CODE_OF_CONDUCT.md).
+
+## Claiming an issue
+
+Want to pick something up? Just comment on the issue saying you'd like to work on
+it. A workflow adds the `claimed` label so nobody else duplicates your effort.
+
+Two small rules keep things fair:
+
+- **Two open claims per person.** If you already hold two claimed issues, we'll ask
+  you to finish one first so other people get a turn. Comment again once one lands
+  and the next is yours.
+- **Claims go stale after 14 days.** If a claimed issue sees no activity for two
+  weeks, the label is removed and it goes back in the pool. No hard feelings, and
+  you can always claim it again.
+
+No pressure on timelines otherwise. Ask questions in the issue thread any time.
