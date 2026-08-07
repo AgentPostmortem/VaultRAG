@@ -48,12 +48,17 @@ def detect_conflicts(hits: list[Hit]) -> list[Conflict]:
     both answering the same question. That is worth a flag even when they happen to agree.
     """
     out: list[Conflict] = []
+    seen_pairs: set[frozenset[str]] = set()
     official = [h for h in hits if h.is_official]
 
     for i, a in enumerate(official):
         for b in official[i + 1 :]:
             if a.doc_id == b.doc_id:
                 continue
+            pair = frozenset((a.doc_id, b.doc_id))
+            if pair in seen_pairs:
+                continue
+            seen_pairs.add(pair)
             out.append(
                 Conflict(
                     doc_a=a.doc_id,
@@ -70,6 +75,10 @@ def detect_conflicts(hits: list[Hit]) -> list[Conflict]:
     for a in official:
         for b in unofficial:
             if a.doc_id != b.doc_id:
+                pair = frozenset((a.doc_id, b.doc_id))
+                if pair in seen_pairs:
+                    continue
+                seen_pairs.add(pair)
                 out.append(
                     Conflict(
                         doc_a=a.doc_id,

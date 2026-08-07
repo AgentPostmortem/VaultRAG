@@ -67,6 +67,13 @@ def test_chunks_from_one_document_are_not_a_conflict_with_themselves():
     assert detect_conflicts([_hit("hr-policy"), _hit("hr-policy")]) == []
 
 
+def test_duplicate_chunks_from_two_documents_report_one_conflict_pair():
+    hits = [_hit("hr-policy"), _hit("hr-policy"), _hit("finance-policy"), _hit("finance-policy")]
+    conflicts = detect_conflicts(hits)
+    assert len(conflicts) == 1
+    assert {conflicts[0].doc_a, conflicts[0].doc_b} == {"hr-policy", "finance-policy"}
+
+
 def test_a_single_source_of_truth_produces_no_conflict():
     assert detect_conflicts([_hit("hr-policy")]) == []
 
