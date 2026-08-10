@@ -49,6 +49,7 @@ class AskResponse(BaseModel):
     citations: list[CitationOut] = []
     conflict: bool = False
     refusal_reason: str | None = None
+    dropped_citations: list[int] = []
     query_id: int
 
 
@@ -161,6 +162,7 @@ async def ask(req: AskRequest, user_id: str = Depends(current_user)) -> AskRespo
         answered=answer.answered,
         conflict=answer.conflict,
         refusal_reason=answer.refusal_reason,
+        dropped_citations=answer.dropped_citations,
         query_id=query_id,
         citations=[
             CitationOut(doc_id=c.doc_id, title=c.title, chunk_id=c.chunk_id, url=c.url, owner=c.owner)
