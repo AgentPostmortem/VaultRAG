@@ -119,6 +119,26 @@ async def test_ask_returns_only_permitted_documents(client):
     cited = {c["doc_id"] for c in body["citations"]}
     assert "ceo-private" not in cited, "LEAK: CEO notes surfaced over the API"
 
+async def test_dropped_citations_are_surfaced_in_ask_response(client):
+    """The model cites source [9] when only one source (index 1) was actually given.
+
+    The dropped citation should be visible in the API response, not silently discarded.
+    """
+    await _seed(client)
+    from vaultrag.generate import FakeLLM
+    client._transport.app.state.llm = FakeLLM(
+        '{"answer": "the bonus is 10%", "cited": [1, 9], "conflict": false}'
+    )
+    r = await client.post(
+        "/ask",
+        json={"question": "quarterly bonus payout policy"},
+        headers={"X-User-Id": "alice"},
+    )
+    assert r.status_code == 200
+    body = r.json()
+    assert body["answered"] is True
+    assert body["dropped_citations"] == [9]
+
 
 async def test_user_with_no_access_gets_a_refusal_not_a_leak(client):
     """bob is in sales. Neither seeded document is his, so he should be told nothing was found,

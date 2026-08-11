@@ -91,6 +91,10 @@ async def _ask(args) -> int:
             console.print(f"[yellow]stale[/] {s.doc_id} last updated {s.age_days}d ago (owner: {s.owner})")
 
         answer = generate(llm, args.question, hits)
+
+        if answer.dropped_citations:
+            console.print(f"[yellow]unverified citations dropped[/] {answer.dropped_citations}")
+
         console.print(f"\n[bold]{answer.text}[/]")
         if answer.citations:
             console.print("[dim]sources: " + ", ".join(c.doc_id for c in answer.citations) + "[/]")
