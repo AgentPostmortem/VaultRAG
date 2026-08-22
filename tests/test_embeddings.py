@@ -33,17 +33,17 @@ def test_local_embedder_detects_model_dimensions(monkeypatch):
     assert embedder.dims == DIMS
 
 
-def test_local_embedder_rejects_wrong_dimensions(monkeypatch):
+def test_local_embedder_rejects_wrong_dimensions_on_repeated_access(monkeypatch):
     install_fake_sentence_transformers(monkeypatch, 768)
 
-    model_name = "sentence-transformers/all-mpnet-base-v2"
-    embedder = LocalEmbedder(model_name)
+    embedder = LocalEmbedder("sentence-transformers/all-mpnet-base-v2")
 
-    with pytest.raises(
-        ValueError,
-        match=r"all-mpnet-base-v2.*768.*384.*vector\(384\)",
-    ):
-        embedder.dims
+    for _ in range(2):
+        with pytest.raises(
+            ValueError,
+            match=r"all-mpnet-base-v2.*768.*384.*vector\(384\)",
+        ):
+            embedder.dims
 
 
 def test_local_embedder_error_mentions_schema(monkeypatch):

@@ -74,20 +74,21 @@ class LocalEmbedder:
         if self._model is None:
             from sentence_transformers import SentenceTransformer
 
-            self._model = SentenceTransformer(self._model_name)
-            self._dims = self._model.get_sentence_embedding_dimension()
+            model = SentenceTransformer(self._model_name)
+            dims = model.get_sentence_embedding_dimension()
 
-            if self._dims != DIMS:
+            if dims != DIMS:
                 raise ValueError(
                     f"Embedding model {self._model_name!r} produces "
-                    f"{self._dims}-dimensional vectors, but VaultRAG expects "
+                    f"{dims}-dimensional vectors, but VaultRAG expects "
                     f"{DIMS} dimensions. The embedding column in "
                     f"vaultrag/schema.sql is vector({DIMS}). Changing "
                     f"EMBED_MODEL requires updating the schema and "
                     f"re-ingesting the corpus."
                 )
 
-        return self._model
+            self._model = model
+            self._dims = dims
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         model = self._load()
