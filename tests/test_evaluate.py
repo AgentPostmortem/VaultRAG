@@ -87,6 +87,33 @@ async def test_real_llm_is_held_to_refusal_correctness(corpus, conn, embedder):
     assert report.pass_rate == 0.0
 
 
+@pytest.mark.asyncio
+async def test_unknown_principal_with_no_expected_docs_has_perfect_recall(conn, embedder):
+    cases = [_case("unknown-refusal", "ghost-user", "anything", should_answer=False)]
+
+    report = await run_eval(conn, embedder, _ANSWERS, cases, llm_judged=False)
+
+    assert report.cases[0].recall == 1.0
+    assert report.mean_recall == 1.0
+
+
+@pytest.mark.asyncio
+async def test_unknown_principal_still_misses_expected_docs(conn, embedder):
+    cases = [
+        _case(
+            "unknown-miss",
+            "ghost-user",
+            "anything",
+            expected=["required-document"],
+        )
+    ]
+
+    report = await run_eval(conn, embedder, _ANSWERS, cases, llm_judged=False)
+
+    assert report.cases[0].recall == 0.0
+    assert report.mean_recall == 0.0
+
+
 # --------------------------------------------------------------------------- scoring arithmetic
 
 
