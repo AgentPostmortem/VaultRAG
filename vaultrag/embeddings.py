@@ -89,6 +89,9 @@ class LocalEmbedder:
 
             self._model = model
             self._dims = dims
+            
+        return self._model
+
 
     def embed(self, texts: list[str]) -> list[list[float]]:
         model = self._load()

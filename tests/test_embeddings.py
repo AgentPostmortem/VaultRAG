@@ -13,6 +13,14 @@ class FakeSentenceTransformer:
     def get_sentence_embedding_dimension(self) -> int:
         return self._dims
 
+    def encode(
+        self,
+        texts: list[str],
+        normalize_embeddings: bool,
+        show_progress_bar: bool,
+    ) -> list[list[float]]:
+        return [[0.0] * self._dims for _ in texts]
+
 
 def install_fake_sentence_transformers(monkeypatch, dims: int):
     def constructor(model_name: str):
@@ -31,6 +39,17 @@ def test_local_embedder_detects_model_dimensions(monkeypatch):
     embedder = LocalEmbedder("fake-model")
 
     assert embedder.dims == DIMS
+
+
+def test_local_embedder_embed_works_with_valid_dimensions(monkeypatch):
+    install_fake_sentence_transformers(monkeypatch, DIMS)
+
+    embedder = LocalEmbedder("fake-model")
+
+    result = embedder.embed(["hello", "world"])
+
+    assert len(result) == 2
+    assert all(len(vector) == DIMS for vector in result)
 
 
 def test_local_embedder_rejects_wrong_dimensions_on_repeated_access(monkeypatch):
