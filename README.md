@@ -264,8 +264,20 @@ EMBEDDER=fake LLM=fake ./.venv/bin/python -m uvicorn vaultrag.main:app --reload
 Tests need no API keys: they use a deterministic offline embedder and a scripted LLM, because
 access control is not a semantic question and shouldn't need a 90MB model download to verify.
 
-For real use, set `EMBEDDER=local` (sentence-transformers, free, no key) and `LLM=groq` with a
-`GROQ_API_KEY`. Zero cost either way.
+For real use, set `EMBEDDER=local` (sentence-transformers, free, no key) and
+`LLM=groq` with a `GROQ_API_KEY`. Zero cost either way.
+
+### Changing the embedding model
+
+`EMBED_MODEL` defaults to `sentence-transformers/all-MiniLM-L6-v2`, which produces
+384-dimensional embeddings.
+
+If you change `EMBED_MODEL`, the model's embedding dimension must match the
+`vector(384)` column in `vaultrag/schema.sql`. Changing to a model with a different
+dimension requires updating the database schema and re-ingesting the corpus.
+
+VaultRAG validates the embedding dimension when the local model is loaded and raises
+a clear error if it does not match the database schema.
 
 ## Status
 
