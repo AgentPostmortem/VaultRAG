@@ -91,7 +91,7 @@ class EvalReport:
 
     @property
     def mean_recall(self) -> float:
-        scored = [c.recall for c in self.cases if c.recall is not None]
+        scored = [c.recall for c in self.cases]
         return sum(scored) / len(scored) if scored else 0.0
 
     @property
@@ -148,6 +148,7 @@ async def run_case(
         return CaseResult(
             case_id=case.id,
             user_id=case.user_id,
+            recall=1.0 if not case.expected_docs else 0.0,
             correct_refusal=not case.should_answer,
             llm_judged=llm_judged,
         )
