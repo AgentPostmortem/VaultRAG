@@ -8,9 +8,12 @@ refuses rather than guesses.
 
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
-from vaultrag.generate import Answer, FakeLLM, generate
+import pytest
+
+from vaultrag.generate import FakeLLM, generate
 from vaultrag.retrieval import Hit
 
 
@@ -112,3 +115,24 @@ def test_json_in_a_code_fence_is_parsed():
     ans = generate(llm, "what is the bonus", [_hit()])
     assert ans.answered is True
     assert ans.text == "10% of base [1]."
+
+
+@pytest.mark.parametrize("entry", ["1", "two", 2.5, -1, True, False, None, [], {}])
+def test_malformed_citations_are_recorded_without_coercion(entry):
+    llm = FakeLLM(json.dumps({"answer": "10% of base [1].", "cited": [entry, 1]}))
+    ans = generate(llm, "what is the bonus", [_hit(chunk_id=42)])
+
+    assert ans.answered is True
+    assert [c.chunk_id for c in ans.citations] == [42]
+    assert ans.dropped_citations == [entry]
+    assert type(ans.dropped_citations[0]) is type(entry)
+
+
+def test_only_malformed_citations_refuse_and_preserve_all_entries():
+    entries = ["1", "two", 2.5, -1]
+    llm = FakeLLM(json.dumps({"answer": "10% of base.", "cited": entries}))
+    ans = generate(llm, "what is the bonus", [_hit()])
+
+    assert ans.answered is False
+    assert ans.refusal_reason == "no_verifiable_citation"
+    assert ans.dropped_citations == entries
