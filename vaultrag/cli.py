@@ -16,6 +16,7 @@ from pathlib import Path
 
 import psycopg
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from .config import get_settings
@@ -93,7 +94,9 @@ async def _ask(args) -> int:
         answer = generate(llm, args.question, hits)
 
         if answer.dropped_citations:
-            console.print(f"[yellow]unverified citations dropped[/] {answer.dropped_citations}")
+            console.print(
+                f"[yellow]unverified citations dropped[/] {escape(repr(answer.dropped_citations))}"
+            )
 
         console.print(f"\n[bold]{answer.text}[/]")
         if answer.citations:
