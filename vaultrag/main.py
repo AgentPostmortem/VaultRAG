@@ -49,7 +49,7 @@ class AskResponse(BaseModel):
     citations: list[CitationOut] = []
     conflict: bool = False
     refusal_reason: str | None = None
-    dropped_citations: list[int] = []
+    dropped_citations: list[object] = []
     query_id: int
 
 

@@ -64,7 +64,8 @@ class Answer:
     answered: bool = True
     refusal_reason: str | None = None
     conflict: bool = False
-    dropped_citations: list[int] = field(default_factory=list)  # model cited these; we couldn't verify
+    # Preserve raw JSON entries, including malformed values, as evidence of model errors.
+    dropped_citations: list[object] = field(default_factory=list)
 
 
 _SYSTEM = """You answer questions using ONLY the provided context.
@@ -135,9 +136,10 @@ def generate(llm: LLM, question: str, hits: list[Hit]) -> Answer:
 
     # Verify: the model can only cite sources we actually handed it. Anything else it invented.
     citations: list[Citation] = []
-    dropped: list[int] = []
+    dropped: list[object] = []
     for idx in cited_idx:
-        if 1 <= idx <= len(hits):
+        # JSON source indices must be integers, not booleans or numeric strings.
+        if type(idx) is int and 1 <= idx <= len(hits):
             h = hits[idx - 1]
             citations.append(
                 Citation(chunk_id=h.chunk_id, doc_id=h.doc_id, title=h.title, url=h.url, owner=h.owner)
@@ -163,7 +165,7 @@ def generate(llm: LLM, question: str, hits: list[Hit]) -> Answer:
     )
 
 
-def _parse(raw: str) -> tuple[str, list[int], bool] | None:
+def _parse(raw: str) -> tuple[str, list[object], bool] | None:
     """Pull JSON out of a model response, tolerating code fences and stray prose."""
     candidate = raw.strip()
 
@@ -190,8 +192,8 @@ def _parse(raw: str) -> tuple[str, list[int], bool] | None:
     cited = data.get("cited", [])
     if not isinstance(cited, list):
         cited = []
-    idx = [int(c) for c in cited if isinstance(c, (int, str)) and str(c).strip().isdigit()]
-    return (answer, idx, bool(data.get("conflict", False)))
+    # Verification records invalid entries; filtering here would erase that evidence.
+    return (answer, cited, bool(data.get("conflict", False)))
 
 
 class FakeLLM:
