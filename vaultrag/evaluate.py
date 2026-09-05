@@ -160,6 +160,7 @@ def load_gold(path: str | Path) -> list[GoldCase]:
         )
 
     required_fields = ("id", "user_id", "question")
+    seen_ids: set[str] = set()
 
     for i, case in enumerate(data["cases"]):
         ctx = f"case index {i}"
@@ -178,6 +179,13 @@ def load_gold(path: str | Path) -> list[GoldCase]:
                 raise ValueError(
                     f"Field '{req_field}' must be a string in {ctx} in '{path}', got {type(case[req_field]).__name__}"
                 )
+
+        case_id = case["id"]
+        if case_id in seen_ids:
+            raise ValueError(
+                f"Duplicate case id '{case_id}' in {ctx} in '{path}'"
+            )
+        seen_ids.add(case_id)
 
         if "expected_docs" in case and (
             not isinstance(case["expected_docs"], list)

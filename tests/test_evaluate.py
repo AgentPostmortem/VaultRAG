@@ -354,3 +354,19 @@ def test_load_gold_valid_file():
         assert cases[1].should_answer is True
     finally:
         Path(tmp_path).unlink(missing_ok=True)
+
+
+def test_load_gold_duplicate_case_ids():
+    tmp_path = _write_temp_gold(
+        {
+            "cases": [
+                {"id": "duplicate-case-id", "user_id": "alice", "question": "q1"},
+                {"id": "duplicate-case-id", "user_id": "bob", "question": "q2"},
+            ]
+        }
+    )
+    try:
+        with pytest.raises(ValueError, match="duplicate-case-id"):
+            load_gold(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
