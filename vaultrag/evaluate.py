@@ -135,7 +135,79 @@ class EvalReport:
 
 
 def load_gold(path: str | Path) -> list[GoldCase]:
-    data = json.loads(Path(path).read_text())
+    path_obj = Path(path)
+    try:
+        raw = path_obj.read_text(encoding="utf-8")
+    except Exception as e:
+        raise ValueError(f"Failed to read gold file '{path}': {e}") from e
+
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in gold file '{path}': {e}") from e
+
+    if not isinstance(data, dict):
+        raise ValueError(
+            f"Invalid gold file format in '{path}': root must be a JSON object, got {type(data).__name__}"
+        )
+
+    if "cases" not in data:
+        raise ValueError(f"Invalid gold file format in '{path}': missing required 'cases' key")
+
+    if not isinstance(data["cases"], list):
+        raise ValueError(
+            f"Invalid gold file format in '{path}': 'cases' must be a list, got {type(data['cases']).__name__}"
+        )
+
+    required_fields = ("id", "user_id", "question")
+    seen_ids: set[str] = set()
+
+    for i, case in enumerate(data["cases"]):
+        ctx = f"case index {i}"
+        if not isinstance(case, dict):
+            raise ValueError(
+                f"Invalid case at index {i} in '{path}': case must be a dictionary, got {type(case).__name__}"
+            )
+
+        if "id" in case and isinstance(case["id"], str):
+            ctx = f"case '{case['id']}' (index {i})"
+
+        for req_field in required_fields:
+            if req_field not in case:
+                raise ValueError(f"Missing required field '{req_field}' in {ctx} in '{path}'")
+            if not isinstance(case[req_field], str):
+                raise ValueError(
+                    f"Field '{req_field}' must be a string in {ctx} in '{path}', got {type(case[req_field]).__name__}"
+                )
+
+        case_id = case["id"]
+        if case_id in seen_ids:
+            raise ValueError(
+                f"Duplicate case id '{case_id}' in {ctx} in '{path}'"
+            )
+        seen_ids.add(case_id)
+
+        if "expected_docs" in case and (
+            not isinstance(case["expected_docs"], list)
+            or not all(isinstance(d, str) for d in case["expected_docs"])
+        ):
+            raise ValueError(
+                f"Field 'expected_docs' must be a list of strings in {ctx} in '{path}'"
+            )
+
+        if "forbidden_docs" in case and (
+            not isinstance(case["forbidden_docs"], list)
+            or not all(isinstance(d, str) for d in case["forbidden_docs"])
+        ):
+            raise ValueError(
+                f"Field 'forbidden_docs' must be a list of strings in {ctx} in '{path}'"
+            )
+
+        if "should_answer" in case and not isinstance(case["should_answer"], bool):
+            raise ValueError(
+                f"Field 'should_answer' must be a boolean in {ctx} in '{path}', got {type(case['should_answer']).__name__}"
+            )
+
     return [GoldCase(**c) for c in data["cases"]]
 
 

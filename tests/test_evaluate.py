@@ -8,9 +8,13 @@ crediting a stub LLM for judgement it never made.
 
 from __future__ import annotations
 
+import json
+import tempfile
+from pathlib import Path
+
 import pytest
 
-from vaultrag.evaluate import CaseResult, EvalReport, GoldCase, diff, run_eval
+from vaultrag.evaluate import CaseResult, EvalReport, GoldCase, diff, load_gold, run_eval
 from vaultrag.generate import FakeLLM
 
 _ANSWERS = FakeLLM('{"answer": "The engineering bonus is 10% of base.", "cited": [1], "conflict": false}')
@@ -167,3 +171,202 @@ def test_diff_reports_a_fix():
 def test_diff_reports_no_change_when_nothing_moved():
     r = [CaseResult("c1", "alice", recall=1.0)]
     assert diff(_report("v1", r), _report("v2", list(r)))["verdict"] == "NO CHANGE"
+
+
+# ----------------------------------------------------------------- gold file parsing & validation
+
+
+def _write_temp_gold(content: str | dict) -> str:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False, encoding="utf-8") as f:
+        if isinstance(content, str):
+            f.write(content)
+        else:
+            json.dump(content, f)
+        return f.name
+
+
+def test_load_gold_invalid_json_syntax():
+    tmp_path = _write_temp_gold("{ invalid json: ")
+    try:
+        with pytest.raises(ValueError, match="Invalid JSON"):
+            load_gold(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def test_load_gold_missing_cases_key():
+    tmp_path = _write_temp_gold({"not_cases": []})
+    try:
+        with pytest.raises(ValueError, match="missing required 'cases' key"):
+            load_gold(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def test_load_gold_cases_not_a_list():
+    tmp_path = _write_temp_gold({"cases": "not a list"})
+    try:
+        with pytest.raises(ValueError, match="'cases' must be a list"):
+            load_gold(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def test_load_gold_root_not_dict():
+    tmp_path = _write_temp_gold(["not", "a", "dict"])
+    try:
+        with pytest.raises(ValueError, match="root must be a JSON object"):
+            load_gold(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def test_load_gold_case_not_a_dict():
+    tmp_path = _write_temp_gold({"cases": ["not-a-dict"]})
+    try:
+        with pytest.raises(ValueError, match="must be a dictionary"):
+            load_gold(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def test_load_gold_case_missing_required_field():
+    # missing id
+    tmp_path = _write_temp_gold(
+        {
+            "cases": [
+                {
+                    "user_id": "alice",
+                    "question": "what is the policy?",
+                }
+            ]
+        }
+    )
+    try:
+        with pytest.raises(ValueError, match="Missing required field 'id'"):
+            load_gold(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+    # missing user_id
+    tmp_path2 = _write_temp_gold(
+        {
+            "cases": [
+                {
+                    "id": "c1",
+                    "question": "what is the policy?",
+                }
+            ]
+        }
+    )
+    try:
+        with pytest.raises(ValueError, match="Missing required field 'user_id'"):
+            load_gold(tmp_path2)
+    finally:
+        Path(tmp_path2).unlink(missing_ok=True)
+
+    # missing question
+    tmp_path3 = _write_temp_gold(
+        {
+            "cases": [
+                {
+                    "id": "c1",
+                    "user_id": "alice",
+                }
+            ]
+        }
+    )
+    try:
+        with pytest.raises(ValueError, match="Missing required field 'question'"):
+            load_gold(tmp_path3)
+    finally:
+        Path(tmp_path3).unlink(missing_ok=True)
+
+
+def test_load_gold_invalid_optional_field_types():
+    # expected_docs not a list
+    tmp1 = _write_temp_gold(
+        {"cases": [{"id": "c1", "user_id": "u1", "question": "q", "expected_docs": "doc1"}]}
+    )
+    try:
+        with pytest.raises(ValueError, match="Field 'expected_docs' must be a list"):
+            load_gold(tmp1)
+    finally:
+        Path(tmp1).unlink(missing_ok=True)
+
+    # forbidden_docs not a list
+    tmp2 = _write_temp_gold(
+        {"cases": [{"id": "c1", "user_id": "u1", "question": "q", "forbidden_docs": 123}]}
+    )
+    try:
+        with pytest.raises(ValueError, match="Field 'forbidden_docs' must be a list"):
+            load_gold(tmp2)
+    finally:
+        Path(tmp2).unlink(missing_ok=True)
+
+    # should_answer not a bool
+    tmp3 = _write_temp_gold(
+        {"cases": [{"id": "c1", "user_id": "u1", "question": "q", "should_answer": "yes"}]}
+    )
+    try:
+        with pytest.raises(ValueError, match="Field 'should_answer' must be a boolean"):
+            load_gold(tmp3)
+    finally:
+        Path(tmp3).unlink(missing_ok=True)
+
+
+def test_load_gold_valid_file():
+    valid_data = {
+        "cases": [
+            {
+                "id": "c1",
+                "user_id": "alice",
+                "question": "what is the policy?",
+                "expected_docs": ["doc1"],
+                "forbidden_docs": ["doc2"],
+                "should_answer": True,
+            },
+            {
+                "id": "c2",
+                "user_id": "bob",
+                "question": "where is the office?",
+            },
+        ]
+    }
+    tmp_path = _write_temp_gold(valid_data)
+    try:
+        cases = load_gold(tmp_path)
+        assert len(cases) == 2
+        assert isinstance(cases[0], GoldCase)
+        assert cases[0].id == "c1"
+        assert cases[0].user_id == "alice"
+        assert cases[0].question == "what is the policy?"
+        assert cases[0].expected_docs == ["doc1"]
+        assert cases[0].forbidden_docs == ["doc2"]
+        assert cases[0].should_answer is True
+
+        assert isinstance(cases[1], GoldCase)
+        assert cases[1].id == "c2"
+        assert cases[1].user_id == "bob"
+        assert cases[1].question == "where is the office?"
+        assert cases[1].expected_docs == []
+        assert cases[1].forbidden_docs == []
+        assert cases[1].should_answer is True
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
+
+
+def test_load_gold_duplicate_case_ids():
+    tmp_path = _write_temp_gold(
+        {
+            "cases": [
+                {"id": "duplicate-case-id", "user_id": "alice", "question": "q1"},
+                {"id": "duplicate-case-id", "user_id": "bob", "question": "q2"},
+            ]
+        }
+    )
+    try:
+        with pytest.raises(ValueError, match="duplicate-case-id"):
+            load_gold(tmp_path)
+    finally:
+        Path(tmp_path).unlink(missing_ok=True)
