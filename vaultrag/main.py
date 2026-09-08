@@ -54,10 +54,10 @@ class AskResponse(BaseModel):
 
 
 class DocIn(BaseModel):
-    id: str
-    title: str
+    id: str = Field(min_length=1)
+    title: str = Field(min_length=1)
     source: str
-    text: str
+    text: str = Field(min_length=1)
     acl: list[str] = Field(description="user ids and/or group names. Empty means nobody can see it.")
     owner: str | None = None
     department: str | None = None

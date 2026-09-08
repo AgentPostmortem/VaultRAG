@@ -94,6 +94,20 @@ async def test_health(client):
     assert r.status_code == 200
 
 
+async def test_empty_document_text_is_rejected(client):
+    r = await client.post(
+        "/documents",
+        json={
+            "id": "empty-text",
+            "title": "Empty Text",
+            "source": "wiki",
+            "acl": ["engineering"],
+            "text": "",
+        },
+    )
+    assert r.status_code == 422
+
+
 async def test_ask_requires_identity(client):
     r = await client.post("/ask", json={"question": "what is the bonus"})
     assert r.status_code == 422, "no user header should be rejected, not defaulted"
