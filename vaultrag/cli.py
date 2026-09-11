@@ -19,7 +19,7 @@ from rich.console import Console
 from rich.markup import escape
 from rich.table import Table
 
-from .config import get_settings
+from .config import StartupConfigError, get_settings
 from .conflicts import corpus_freshness, detect_conflicts, detect_stale
 from .db import init_schema
 from .embeddings import get_embedder
@@ -153,7 +153,7 @@ async def _health(args) -> int:
 
 
 def _diff(args) -> int:
-    from .evaluate import EvalReport, CaseResult
+    from .evaluate import CaseResult, EvalReport
 
     def load(p):
         d = json.loads(Path(p).read_text())
@@ -203,9 +203,13 @@ def main(argv: list[str] | None = None) -> int:
     d.set_defaults(func=_diff)
 
     args = p.parse_args(argv)
-    if hasattr(args, "afunc"):
-        return asyncio.run(args.afunc(args))
-    return args.func(args)
+    try:
+        if hasattr(args, "afunc"):
+            return asyncio.run(args.afunc(args))
+        return args.func(args)
+    except StartupConfigError as exc:
+        console.print(f"[red]configuration error[/] {escape(str(exc))}")
+        return 2
 
 
 if __name__ == "__main__":
