@@ -77,6 +77,11 @@ async def search(
     Returns:
         Up to `limit` chunks the user is allowed to see, best first.
     """
+    if limit <= 0:
+        raise ValueError("limit must be greater than 0")
+    if candidates <= 0:
+        raise ValueError("candidates must be greater than 0")
+
     # A chunk is visible iff its document has an ACL row whose principal is one of ours.
     # EXISTS rather than JOIN so a document with several matching ACL rows yields one chunk, not N.
     #

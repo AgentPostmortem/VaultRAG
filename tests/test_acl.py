@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import pytest
 
-from vaultrag.retrieval import resolve_principal, search
+from vaultrag.retrieval import Principal, resolve_principal, search
 
 pytestmark = pytest.mark.asyncio
 
@@ -29,6 +29,34 @@ async def _search_as(conn, embedder, user_id: str, question: str = QUESTION, lim
     vec = embedder.embed([question])[0]
     hits = await search(conn, principal, question, vec, limit=limit)
     return {h.doc_id for h in hits}
+
+
+class _NoDatabaseAccess:
+    def cursor(self, **kwargs):
+        raise AssertionError("search opened a database cursor before validating arguments")
+
+
+@pytest.mark.parametrize(
+    ("limit", "candidates", "message"),
+    [
+        (0, 50, "limit"),
+        (-1, 50, "limit"),
+        (5, 0, "candidates"),
+        (5, -1, "candidates"),
+    ],
+)
+async def test_search_rejects_non_positive_counts_before_database_access(
+    limit, candidates, message
+):
+    with pytest.raises(ValueError, match=message):
+        await search(
+            _NoDatabaseAccess(),
+            Principal(user_id="alice", groups=()),
+            QUESTION,
+            [0.0],
+            limit=limit,
+            candidates=candidates,
+        )
 
 
 async def test_group_isolation_alice_cannot_see_sales_or_hr(conn, corpus, embedder):
